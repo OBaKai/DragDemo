@@ -9,10 +9,10 @@ import android.util.SparseArray;
 import android.view.View;
 import android.view.ViewGroup;
 
+import com.llk.d.Lg;
 import com.llk.d.drag.DragLayer;
 
 public class HorizontalPageLayoutManager extends RecyclerView.LayoutManager {
-    private static final String TAG = "HorizontalPageLayoutManager";
     private final Context context;
     int itemWidthUsed;
     int itemHeightUsed;
@@ -60,8 +60,9 @@ public class HorizontalPageLayoutManager extends RecyclerView.LayoutManager {
      */
     @Override
     public int scrollHorizontallyBy(int dx, RecyclerView.Recycler recycler, RecyclerView.State state) {
-        //Temporarily detach and scrap all currently attached child views.
+        Lg.i("scrollHorizontallyBy");
         detachAndScrapAttachedViews(recycler);
+
         int newX = offsetX + dx;
         int result = dx;
         if (newX > totalWidth) {
@@ -79,18 +80,18 @@ public class HorizontalPageLayoutManager extends RecyclerView.LayoutManager {
     //对子 VIew 布局
     @Override
     public void onLayoutChildren(RecyclerView.Recycler recycler, RecyclerView.State state) {
+        Lg.i("onLayoutChildren");
 
-        //注意，这句是要解决从app切换到其他竖屏的界面再切换回来以后，要保证焦点不变。
-        //什么？你说为啥会变？因为真的会变啊，不信你看代码= =、
+        //解决从app切换到其他竖屏的界面再切换回来以后要保证不变。
         if (!shouldLayoutChildren()) return;
 
-//        Lg.v("onLayoutChildren() called with: " + "state = [" + state + "]");
         int itemCount = getItemCount();
         if (itemCount == 0) {
             removeAndRecycleAllViews(recycler);
             return;
         }
-        //  Returns true if the RecyclerView is currently measuring the layout.
+
+        //Returns true if the RecyclerView is currently measuring the layout.
         if (state.isPreLayout()) {
             return;
         }
@@ -167,13 +168,14 @@ public class HorizontalPageLayoutManager extends RecyclerView.LayoutManager {
     }
 
     protected boolean shouldLayoutChildren() {
-        /* >benny: [16-01-13 20:20] 宽度必须大于高度, 主要是考虑解锁时瞬间的竖屏状态导致的焦点偏移 */
+        /*宽度必须大于高度, 主要是考虑解锁时瞬间的竖屏状态导致的焦点偏移 */
         return context.getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE && getWidth() > getHeight();
     }
 
     @Override
     public void onDetachedFromWindow(RecyclerView view, RecyclerView.Recycler recycler) {
         super.onDetachedFromWindow(view, recycler);
+        Lg.i("onDetachedFromWindow");
         offsetX = 0;
     }
 
@@ -212,11 +214,21 @@ public class HorizontalPageLayoutManager extends RecyclerView.LayoutManager {
             //判断矩形是否相交
             if (Rect.intersects(displayRect, allItemFrames.get(i))) {
                 View view = recycler.getViewForPosition(i);
+
+                //首先 通过addView添加到RecyclerView
                 addView(view);
+
+                //接着 对view进行测量
+                //TODO 探究下 measureChildWithMargins 实际作用
+                //其实这里itemWidthUsed itemHeightUsed并不是很清楚用处在哪里, 传0也可以的
                 measureChildWithMargins(view, itemWidthUsed, itemHeightUsed);
+
                 Rect rect = allItemFrames.get(i);
+
+                //最后 调用layoutDecorated对item view进行layout操作.
                 layoutDecorated(view, rect.left - offsetX, rect.top, rect.right - offsetX, rect.bottom);
 
+                //在add child view过程中把 child view添加到 DropTargets容器里面
                 if(mDragLayer != null){
                     mDragLayer.loadChildView(view);
                 }
