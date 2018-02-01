@@ -3,12 +3,6 @@ package com.llk.d.pagerecycler;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 
-
-/**
- * Description:分页滑动效果
- * author:wjc on 2017/4/20 11:46
- */
-
 public class ScrollController {
 
     private RecyclerView mRecyclerView = null;

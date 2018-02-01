@@ -4,7 +4,6 @@ import android.util.Log;
 
 /**
  * （：Author:llk
- * （：WorkShop:PhoneLink
  * （：CreatedDate:2016/5/20
  * （：record：
  */
